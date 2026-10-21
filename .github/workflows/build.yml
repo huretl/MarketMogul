@@ -1,0 +1,41 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      DALAMUD_HOME: ${{ github.workspace }}/.dalamud/
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Download Dalamud
+      run: |
+        curl -sSL https://goatcorp.github.io/dalamud-distrib/latest.zip -o dalamud.zip
+        unzip -q dalamud.zip -d "$DALAMUD_HOME"
+
+    - name: Build
+      run: dotnet build --configuration Release
+
+    - name: Test
+      run: dotnet test --configuration Release --no-build
+
+    - name: Store plugin
+      uses: actions/upload-artifact@v4
+      with:
+        name: MarketMogul
+        path: src/MarketMogul/bin/x64/Release/MarketMogul/*
+        if-no-files-found: error

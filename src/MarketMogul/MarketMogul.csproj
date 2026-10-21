@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+  <PropertyGroup>
+    <Version>0.1.0.0</Version>
+    <!-- Champs du manifeste : https://github.com/goatcorp/DalamudPackager/blob/827d88dc/DalamudPackager/DalamudPackager.cs#L420 -->
+    <Author>Louis Huret</Author>
+    <Name>MarketMogul</Name>
+    <Punchline>Achat-revente entre mondes : quoi acheter, où, et à quel prix revendre.</Punchline>
+    <Description>Scanne le marketboard de ton data center via Universalis et recommande les objets à acheter sur les autres mondes pour les revendre sur ton monde d'origine, taxes, vitesse de vente et fiabilité des données comprises.</Description>
+    <Tags>market;marketboard;trading;universalis</Tags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarketMogul.Core\MarketMogul.Core.csproj" />
+  </ItemGroup>
+</Project>

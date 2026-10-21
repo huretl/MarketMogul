@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MarketMogul.Core/MarketMogul.Core.csproj" />
+    <Project Path="src/MarketMogul/MarketMogul.csproj">
+      <Platform Project="x64" />
+    </Project>
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MarketMogul.Core.Tests/MarketMogul.Core.Tests.csproj" />
+  </Folder>
+</Solution>
