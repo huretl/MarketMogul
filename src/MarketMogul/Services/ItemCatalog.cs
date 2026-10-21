@@ -4,7 +4,7 @@ using Lumina.Excel.Sheets;
 
 namespace MarketMogul.Services;
 
-public sealed record ItemInfo(uint Id, string Name, uint IconId);
+public sealed record ItemInfo(uint Id, string Name, uint IconId, int StackSize);
 
 /// <summary>Objets vendables au marketboard, lus dans les données du jeu.</summary>
 public sealed class ItemCatalog
@@ -22,7 +22,7 @@ public sealed class ItemCatalog
             if (item.ItemSearchCategory.RowId == 0 || item.IsUntradable)
                 continue;
 
-            items[item.RowId] = new ItemInfo(item.RowId, item.Name.ExtractText(), item.Icon);
+            items[item.RowId] = new ItemInfo(item.RowId, item.Name.ExtractText(), item.Icon, (int)item.StackSize);
             ids.Add(item.RowId);
         }
 
@@ -30,4 +30,6 @@ public sealed class ItemCatalog
     }
 
     public ItemInfo? Get(uint itemId) => items.GetValueOrDefault(itemId);
+
+    public int StackSize(uint itemId) => Get(itemId)?.StackSize ?? 1;
 }

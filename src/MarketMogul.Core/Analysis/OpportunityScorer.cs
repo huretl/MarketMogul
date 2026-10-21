@@ -27,17 +27,15 @@ public static class OpportunityScorer
         if (purchases.Count == 0)
             return null;
 
-        var units = purchases.Sum(p => p.Quantity);
-        var opportunity = new Opportunity(
-            ItemId: itemId,
-            Hq: hq,
-            TargetSellPrice: limits.TargetSellPrice,
-            Purchases: purchases,
-            TotalCost: (long)Math.Ceiling(purchases.Sum(p => p.Subtotal) * (1 + settings.BuyTaxRate)),
-            ExpectedRevenue: (long)Math.Floor(limits.TargetSellPrice * (1 - settings.SellFeeRate) * units),
-            SalesPerDay: stats.SalesPerDay,
-            HomeListedQuantity: stats.ListedQuantity,
-            Confidence: Confidence(stats, home, dataCenter, purchases, now));
+        var opportunity = Opportunity.Create(
+            itemId,
+            hq,
+            limits.TargetSellPrice,
+            purchases,
+            stats.SalesPerDay,
+            stats.ListedQuantity,
+            Confidence(stats, home, dataCenter, purchases, now),
+            settings);
 
         if (opportunity.ExpectedProfit < settings.MinTotalProfit || opportunity.Confidence < settings.MinConfidence)
             return null;

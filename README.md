@@ -16,6 +16,15 @@ Le plugin est **consultatif** : il calcule et conseille, c'est toi qui achètes 
 4. Les opportunités sont triées par **profit par jour × fiabilité**.
 5. En visite sur un autre monde, la fenêtre passe en **mode achat** et ne montre que ce qu'il y a à acheter là, avec un rappel dans le chat à l'arrivée.
 
+### Plan d'achat
+
+L'onglet **Plan** répartit les opportunités du scan selon tes ressources réelles :
+
+- **budget** : tes gils d'inventaire, moins une réserve réglable ;
+- **emplacements de vente** : 20 par servant, moins les annonces en cours, lus dans le jeu après un passage à la sonnette (valeur réglable en attendant).
+
+L'optimiseur privilégie le meilleur profit, pondéré par la fiabilité, pour chaque gil et chaque emplacement consommé. Il tient compte de la taille de pile : un équipement prend un emplacement par unité. Une opération trop grosse est réduite à ses annonces les moins chères plutôt qu'écartée. Le plan est présenté **par monde**, comme un itinéraire, et reste figé pendant que tu achètes (bouton *Recalculer* sinon).
+
 ### Conseil d'achat au marketboard
 
 Quand tu ouvres un objet au marketboard, un panneau s'accroche à droite de la liste des annonces. Il utilise les annonces **reçues en direct par le jeu**, plus fraîches que n'importe quel scan, et les prix de revente de ton monde d'origine, récupérés à la demande (cache de 10 minutes), même sans scan préalable. Pour chaque qualité (NQ/HQ) :
@@ -81,7 +90,7 @@ Le workflow [Release](.github/workflows/release.yml) compile avec la version du 
 - [x] Conseil d'achat à côté du marketboard, à partir des annonces en direct.
 - [ ] Colorer directement les lignes rentables dans la liste du jeu (à valider en jeu).
 - [ ] Cocher les achats faits (événement d'achat du marketboard) et mettre à jour le plan.
-- [ ] Optimiseur de portefeuille : répartir ton budget (gils lus en jeu) et tes emplacements de vente.
+- [x] Optimiseur de portefeuille : répartir ton budget (gils lus en jeu) et tes emplacements de vente.
 - [ ] Prix conseillé et alertes de sous-cotation chez les servants.
 - [ ] Journal P&L : achats et ventes réels, capital immobilisé, objets qui ne se vendent pas.
 - [ ] Facteur de concurrence : stock déjà en vente et fréquence des sous-cotations.

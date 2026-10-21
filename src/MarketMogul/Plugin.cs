@@ -31,6 +31,7 @@ public sealed class Plugin : IDalamudPlugin
     public ScanService Scanner { get; }
     public HomePriceService HomePrices { get; }
     public MarketBoardWatcher MarketBoard { get; }
+    public PlanService Plan { get; }
 
     private readonly UniversalisClient universalis;
 
@@ -49,6 +50,7 @@ public sealed class Plugin : IDalamudPlugin
         Scanner = new ScanService(universalis, Catalog, Log);
         HomePrices = new HomePriceService(universalis, Log);
         MarketBoard = new MarketBoardWatcher(MarketBoardService);
+        Plan = new PlanService(Scanner, Configuration, Catalog);
         Worlds.WorldChanged += OnWorldChanged;
 
         ConfigWindow = new ConfigWindow(this);
@@ -86,19 +88,23 @@ public sealed class Plugin : IDalamudPlugin
         CommandManager.RemoveHandler(CommandName);
     }
 
-    /// <summary>À l'arrivée sur un autre monde, rappelle ce qu'il y a à y acheter.</summary>
+    /// <summary>À l'arrivée sur un autre monde, rappelle ce que le plan prévoit d'y acheter.</summary>
     private void OnWorldChanged()
     {
         if (!Worlds.IsVisiting || Scanner.ScannedHome?.Id != Worlds.Home!.Id)
             return;
 
+        Plan.RefreshIfStale();
         var worldId = Worlds.Current!.Id;
-        var here = Scanner.Opportunities.Where(o => o.Purchases.Any(p => p.WorldId == worldId)).ToList();
+        var here = (Plan.Current?.Positions ?? [])
+            .SelectMany(p => p.Opportunity.Purchases)
+            .Where(p => p.WorldId == worldId)
+            .ToList();
         if (here.Count == 0)
             return;
 
-        var profit = here.Sum(o => o.ExpectedProfit);
-        ChatGui.Print($"{here.Count} achat(s) recommandé(s) sur {Worlds.Current.Name}, profit attendu ~{profit:N0} gils. /mogul pour le détail.", "MarketMogul");
+        var cost = here.Sum(p => p.Subtotal);
+        ChatGui.Print($"Plan : {here.Count} annonce(s) à acheter sur {Worlds.Current.Name}, ~{cost:N0} gils. /mogul pour le détail.", "MarketMogul");
     }
 
     private void OnCommand(string command, string args)

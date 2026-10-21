@@ -17,6 +17,12 @@ public class Configuration : IPluginConfiguration
     /// <summary>Panneau de conseil affiché à côté de la liste des annonces du marketboard.</summary>
     public bool ShowMarketBoardAssistant { get; set; } = true;
 
+    /// <summary>Gils à garder de côté : le plan n'investit que ce qui dépasse.</summary>
+    public long BudgetReserve { get; set; } = 0;
+
+    /// <summary>Emplacements de vente supposés libres tant que les servants n'ont pas été consultés.</summary>
+    public int FallbackListingSlots { get; set; } = 20;
+
     public void Save()
     {
         Plugin.PluginInterface.SavePluginConfig(this);
