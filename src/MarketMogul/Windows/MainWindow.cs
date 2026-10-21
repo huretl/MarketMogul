@@ -9,6 +9,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using MarketMogul.Core.Analysis;
+using MarketMogul.Core.Ledger;
 
 namespace MarketMogul.Windows;
 
@@ -67,6 +68,12 @@ public class MainWindow : Window
             if (tab.Success)
                 DrawOpportunities();
         }
+
+        using (var tab = ImRaii.TabItem("Journal"))
+        {
+            if (tab.Success)
+                DrawLedger();
+        }
     }
 
     private void DrawHeader()
@@ -122,7 +129,7 @@ public class MainWindow : Window
 
         ImGui.TextUnformatted($"Budget : {portfolio.Budget:N0} gils");
         ImGui.SameLine();
-        ImGui.TextDisabled(plugin.Configuration.BudgetReserve > 0 ? $"(inventaire − réserve de {plugin.Configuration.BudgetReserve:N0})" : "(inventaire)");
+        ImGui.TextDisabled(plugin.Configuration.BudgetReserve > 0 ? $"(inventaire moins réserve de {plugin.Configuration.BudgetReserve:N0})" : "(inventaire)");
         ImGui.SameLine();
         ImGui.TextUnformatted($"· Emplacements : {portfolio.SlotsUsed} / {portfolio.Slots}");
         ImGui.SameLine();
@@ -137,12 +144,21 @@ public class MainWindow : Window
             return;
         }
 
+        // Les achats déjà faits depuis le calcul du plan sont cochés.
+        var lines = portfolio.Positions
+            .SelectMany(p => p.Opportunity.Purchases.Select(purchase => (p.Opportunity, Purchase: purchase)))
+            .ToList();
+        var planned = lines.Select(x => new PlannedPurchase(x.Opportunity.ItemId, x.Opportunity.Hq, x.Purchase)).ToList();
+        var bought = PlanProgress.Bought(planned, plugin.Ledger.Records, plan.ComputedAt);
+
         ImGui.TextColored(ImGuiColors.ParsedGold,
             $"Investissement {portfolio.TotalCost:N0} · profit attendu ~{portfolio.ExpectedProfit:N0} gils · {portfolio.Positions.Count} objets");
+        ImGui.SameLine();
+        ImGui.TextDisabled($"· {bought.Count(b => b)} / {bought.Length} annonces achetées");
         ImGui.Spacing();
 
-        var byWorld = portfolio.Positions
-            .SelectMany(p => p.Opportunity.Purchases.Select(purchase => (p.Opportunity, Purchase: purchase)))
+        var byWorld = lines
+            .Select((x, i) => (x.Opportunity, x.Purchase, Bought: bought[i]))
             .GroupBy(x => (x.Purchase.WorldId, x.Purchase.WorldName))
             .OrderByDescending(g => g.Key.WorldId == worlds.Current!.Id)
             .ThenByDescending(g => g.Sum(x => x.Purchase.Subtotal))
@@ -157,10 +173,13 @@ public class MainWindow : Window
                 continue;
 
             var here = group.Key.WorldId == worlds.Current!.Id;
-            var title = $"{group.Key.WorldName} · {group.Sum(x => x.Purchase.Quantity)} unités · {group.Sum(x => x.Purchase.Subtotal):N0} gils";
+            var remaining = group.Where(x => !x.Bought).ToList();
+            var title = remaining.Count == 0
+                ? $"{group.Key.WorldName} · terminé"
+                : $"{group.Key.WorldName} · {remaining.Sum(x => x.Purchase.Quantity)} unités · {remaining.Sum(x => x.Purchase.Subtotal):N0} gils";
             using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen, here))
             {
-                if (!ImGui.CollapsingHeader($"{title}{(here ? "  ← tu es ici" : "")}###{group.Key.WorldId}", ImGuiTreeNodeFlags.DefaultOpen))
+                if (!ImGui.CollapsingHeader($"{title}{(here ? "  (tu es ici)" : "")}###{group.Key.WorldId}", ImGuiTreeNodeFlags.DefaultOpen))
                     continue;
             }
 
@@ -175,8 +194,9 @@ public class MainWindow : Window
             ImGui.TableSetupColumn("Profit", ImGuiTableColumnFlags.None, 1.2f);
             ImGui.TableHeadersRow();
 
-            foreach (var (opportunity, purchase) in group.OrderBy(x => x.Opportunity.ItemId).ThenBy(x => x.Purchase.PricePerUnit))
+            foreach (var (opportunity, purchase, isBought) in group.OrderBy(x => x.Opportunity.ItemId).ThenBy(x => x.Purchase.PricePerUnit))
             {
+                using var dim = ImRaii.PushStyle(ImGuiStyleVar.Alpha, 0.45f, isBought);
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
                 DrawItemName(opportunity.ItemId, opportunity.Hq);
@@ -190,7 +210,82 @@ public class MainWindow : Window
                 ImGui.TableNextColumn();
                 var settings = plugin.Configuration.Trading;
                 var profit = BuyAdvisor.UnitProfit(purchase.PricePerUnit, opportunity.TargetSellPrice, settings) * purchase.Quantity;
-                ImGui.TextColored(ImGuiColors.HealerGreen, $"+{profit:N0}");
+                ImGui.TextColored(ImGuiColors.HealerGreen, isBought ? $"+{profit:N0} (acheté)" : $"+{profit:N0}");
+            }
+        }
+    }
+
+    private void DrawLedger()
+    {
+        var records = plugin.Ledger.Records;
+        if (records.Count == 0)
+        {
+            ImGui.TextDisabled("Aucun achat enregistré. Les achats faits au marketboard apparaissent ici automatiquement.");
+            return;
+        }
+
+        var tax = 1 + plugin.Configuration.Trading.BuyTaxRate;
+        var fee = 1 - plugin.Configuration.Trading.SellFeeRate;
+        var invested = records.Sum(r => r.Subtotal * tax);
+        var withEstimate = records.Where(r => r.ExpectedSellPrice is not null).ToList();
+        var expectedProfit = withEstimate.Sum(r => r.ExpectedSellPrice!.Value * fee * r.Quantity - r.Subtotal * tax);
+
+        ImGui.TextUnformatted($"{records.Count} achats · investi {invested:N0} gils");
+        ImGui.SameLine();
+        ImGui.TextColored(ImGuiColors.HealerGreen, $"· profit attendu ~{expectedProfit:N0}");
+        if (withEstimate.Count < records.Count)
+        {
+            ImGui.SameLine();
+            ImGui.TextDisabled($"({records.Count - withEstimate.Count} sans estimation)");
+        }
+
+        ImGui.SameLine();
+        if (ImGui.SmallButton("Vider") && ImGui.GetIO().KeyCtrl)
+            plugin.Ledger.Clear();
+        if (ImGui.IsItemHovered())
+            ImGui.SetTooltip("Ctrl + clic pour vider le journal.");
+
+        const ImGuiTableFlags flags = ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.SizingStretchProp;
+        using var table = ImRaii.Table("ledger", 6, flags);
+        if (!table.Success)
+            return;
+
+        ImGui.TableSetupScrollFreeze(0, 1);
+        ImGui.TableSetupColumn("Date", ImGuiTableColumnFlags.None, 1.1f);
+        ImGui.TableSetupColumn("Monde", ImGuiTableColumnFlags.None, 1);
+        ImGui.TableSetupColumn("Objet", ImGuiTableColumnFlags.None, 3);
+        ImGui.TableSetupColumn("Achat", ImGuiTableColumnFlags.None, 1.5f);
+        ImGui.TableSetupColumn("Revente / u", ImGuiTableColumnFlags.None, 1.1f);
+        ImGui.TableSetupColumn("Profit attendu", ImGuiTableColumnFlags.None, 1.2f);
+        ImGui.TableHeadersRow();
+
+        foreach (var record in records.OrderByDescending(r => r.At))
+        {
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(record.At.ToLocalTime().ToString("dd/MM HH:mm"));
+
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(record.WorldName);
+
+            ImGui.TableNextColumn();
+            DrawItemName(record.ItemId, record.Hq);
+
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted($"{record.Quantity} × {record.PricePerUnit:N0}");
+
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(record.ExpectedSellPrice is { } sell ? $"{sell:N0}" : "-");
+
+            ImGui.TableNextColumn();
+            if (record.ExpectedSellPrice is { } price)
+            {
+                var profit = price * fee * record.Quantity - record.Subtotal * tax;
+                ImGui.TextColored(profit >= 0 ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed, $"{profit:+#,0;-#,0;0}");
+            }
+            else
+            {
+                ImGui.TextDisabled("-");
             }
         }
     }

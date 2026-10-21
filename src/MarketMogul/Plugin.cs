@@ -1,4 +1,6 @@
+using System;
 using System.Linq;
+using MarketMogul.Core.Analysis;
 using MarketMogul.Core.Universalis;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
@@ -32,6 +34,8 @@ public sealed class Plugin : IDalamudPlugin
     public HomePriceService HomePrices { get; }
     public MarketBoardWatcher MarketBoard { get; }
     public PlanService Plan { get; }
+    public PurchaseLedger Ledger { get; }
+    private readonly PurchaseTracker purchaseTracker;
 
     private readonly UniversalisClient universalis;
 
@@ -51,6 +55,8 @@ public sealed class Plugin : IDalamudPlugin
         HomePrices = new HomePriceService(universalis, Log);
         MarketBoard = new MarketBoardWatcher(MarketBoardService);
         Plan = new PlanService(Scanner, Configuration, Catalog);
+        Ledger = new PurchaseLedger(PluginInterface.GetPluginConfigDirectory(), Log);
+        purchaseTracker = new PurchaseTracker(MarketBoardService, Worlds, Ledger, ExpectedSellPrice);
         Worlds.WorldChanged += OnWorldChanged;
 
         ConfigWindow = new ConfigWindow(this);
@@ -83,6 +89,7 @@ public sealed class Plugin : IDalamudPlugin
         Worlds.Dispose();
         Scanner.Dispose();
         MarketBoard.Dispose();
+        purchaseTracker.Dispose();
         universalis.Dispose();
 
         CommandManager.RemoveHandler(CommandName);
@@ -105,6 +112,19 @@ public sealed class Plugin : IDalamudPlugin
 
         var cost = here.Sum(p => p.Subtotal);
         ChatGui.Print($"Plan : {here.Count} annonce(s) à acheter sur {Worlds.Current.Name}, ~{cost:N0} gils. /mogul pour le détail.", "MarketMogul");
+    }
+
+    /// <summary>Prix de revente estimé d'un objet : celui du scan s'il y figure, sinon les prix chargés à la demande.</summary>
+    private long? ExpectedSellPrice(uint itemId, bool hq)
+    {
+        var fromScan = Scanner.Opportunities.FirstOrDefault(o => o.ItemId == itemId && o.Hq == hq);
+        if (fromScan is not null)
+            return fromScan.TargetSellPrice;
+
+        if (Worlds.Home is not { } home || HomePrices.Get(home.Id, itemId) is not { } data)
+            return null;
+        return HomeMarketStats.From(data, hq, DateTimeOffset.UtcNow, Configuration.Trading.SalesWindowDays, ArbitrageScanner.HomeHistoryEntries)
+            .TargetSellPrice;
     }
 
     private void OnCommand(string command, string args)
