@@ -71,7 +71,7 @@ public class MarketBoardWindow : Window
         if (homeData is null)
         {
             ImGui.TextDisabled(plugin.HomePrices.IsLoading(home.Id, offerings.ItemId)
-                ? $"Chargement des prix de {home.Name}…"
+                ? $"Chargement des prix de {home.Name}..."
                 : $"Pas de données de vente pour {home.Name}.");
             return;
         }
@@ -173,7 +173,7 @@ public class MarketBoardWindow : Window
             if (unitProfit is { } p)
                 ImGui.TextColored(p > 0 ? ImGuiColors.HealerGreen : ImGuiColors.DalamudGrey, $"{p:+#,0;-#,0;0}");
             else
-                ImGui.TextDisabled("–");
+                ImGui.TextDisabled("-");
 
             ImGui.TableNextColumn();
             if (shouldBuy)

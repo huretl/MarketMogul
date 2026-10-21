@@ -10,7 +10,7 @@ public class ConfigWindow : Window
 {
     private readonly Configuration configuration;
 
-    public ConfigWindow(Plugin plugin) : base("MarketMogul – Réglages###MarketMogulConfig")
+    public ConfigWindow(Plugin plugin) : base("MarketMogul · Réglages###MarketMogulConfig")
     {
         Size = new Vector2(440, 420);
         SizeCondition = ImGuiCond.FirstUseEver;

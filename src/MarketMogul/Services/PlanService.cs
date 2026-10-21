@@ -17,7 +17,8 @@ public sealed class PlanService(ScanService scanner, Configuration configuration
     /// <summary>Vrai si les emplacements viennent des servants, faux s'il s'agit de la valeur des réglages.</summary>
     public bool SlotsFromRetainers { get; private set; }
 
-    public DateTime? ComputedAt { get; private set; }
+    /// <summary>En UTC : les achats faits depuis sont cochés dans le plan.</summary>
+    public DateTime ComputedAt { get; private set; }
 
     /// <summary>Recalcule le plan si un nouveau scan est arrivé. À appeler depuis le thread du jeu.</summary>
     public void RefreshIfStale()
@@ -35,6 +36,6 @@ public sealed class PlanService(ScanService scanner, Configuration configuration
         SlotsFromRetainers = retainerSlots is not null;
         Current = PortfolioOptimizer.Optimize(
             basedOn, budget, retainerSlots ?? configuration.FallbackListingSlots, catalog.StackSize, configuration.Trading);
-        ComputedAt = DateTime.Now;
+        ComputedAt = DateTime.UtcNow;
     }
 }
