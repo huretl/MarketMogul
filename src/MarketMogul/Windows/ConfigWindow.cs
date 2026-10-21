@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Windowing;
@@ -11,7 +12,7 @@ public class ConfigWindow : Window
 
     public ConfigWindow(Plugin plugin) : base("MarketMogul – Réglages###MarketMogulConfig")
     {
-        Size = new Vector2(420, 360);
+        Size = new Vector2(440, 420);
         SizeCondition = ImGuiCond.FirstUseEver;
 
         configuration = plugin.Configuration;
@@ -68,6 +69,26 @@ public class ConfigWindow : Window
             changed = true;
         }
 
+        var reserve = (int)configuration.BudgetReserve;
+        if (ImGui.InputInt("Gils à garder de côté", ref reserve, 10_000, 100_000))
+        {
+            configuration.BudgetReserve = reserve < 0 ? 0 : reserve;
+            changed = true;
+        }
+        if (ImGui.IsItemHovered())
+            ImGui.SetTooltip("Le plan investit tes gils d'inventaire moins cette réserve.");
+
+        var fallbackSlots = configuration.FallbackListingSlots;
+        if (ImGui.InputInt("Emplacements de vente libres", ref fallbackSlots, 1, 20))
+        {
+            configuration.FallbackListingSlots = Math.Clamp(fallbackSlots, 0, 200);
+            changed = true;
+        }
+        if (ImGui.IsItemHovered())
+            ImGui.SetTooltip("Utilisé tant que tes servants n'ont pas été consultés. Ensuite, le nombre réel est lu dans le jeu.");
+
+        ImGui.Separator();
+
         var assistant = configuration.ShowMarketBoardAssistant;
         if (ImGui.Checkbox("Conseil d'achat à côté du marketboard", ref assistant))
         {
@@ -76,7 +97,7 @@ public class ConfigWindow : Window
         }
 
         ImGui.Spacing();
-        ImGui.TextDisabled("Les changements s'appliquent au prochain scan.");
+        ImGui.TextDisabled("Les changements s'appliquent au prochain scan ou recalcul du plan.");
 
         if (changed)
             configuration.Save();
