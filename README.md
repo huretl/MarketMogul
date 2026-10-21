@@ -7,7 +7,11 @@ Le plugin est **consultatif** : il calcule et conseille, c'est toi qui achètes 
 ## Fonctionnement
 
 1. Le plugin détecte seul ton monde d'origine, ton monde actuel et ton data center.
-2. Un scan interroge l'API [Universalis](https://universalis.app) pour tous les objets vendables : annonces sur tout le data center, historique des ventes sur ton monde (~330 requêtes, environ 1 minute).
+2. Un scan interroge l'API [Universalis](https://universalis.app) pour tous les objets vendables, en deux passes :
+   - l'**historique des ventes** de ton monde sur 14 jours, pour tous les objets (endpoint `history`, rapide) ;
+   - les **annonces** de ton monde et du data center, uniquement pour les objets qui se revendent assez.
+
+   Les objets sans aucune vente sur ton monde sont mis **en sommeil** et ignorés pendant 24 h (cache local). Les requêtes partent en parallèle, dans les limites de Universalis, avec nouvelles tentatives en cas d'erreur passagère. Mesuré sur Omega (Chaos), 16 845 objets : **~30 s** au premier scan, **~17 s** ensuite.
 3. Pour chaque objet (NQ et HQ), le moteur calcule :
    - un **prix de revente réaliste** : médiane des ventes des 14 derniers jours, ou juste sous l'annonce la moins chère si la concurrence affiche moins cher ;
    - la **vitesse de vente** sur ton monde, et donc la quantité que le marché peut absorber dans l'horizon de ton style de trading ;
@@ -108,4 +112,4 @@ Le workflow [Release](.github/workflows/release.yml) compile avec la version du 
 - [ ] Facteur de concurrence : stock déjà en vente et fréquence des sous-cotations.
 - [x] Stratégie marchand PNJ → marketboard.
 - [ ] Indiquer le PNJ et son emplacement pour les achats chez un marchand.
-- [ ] Scan incrémental et cache local.
+- [x] Scan rapide : pré-filtre sur l'historique, cache des objets en sommeil, requêtes parallèles.

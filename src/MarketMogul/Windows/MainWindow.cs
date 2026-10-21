@@ -43,7 +43,7 @@ public class MainWindow : Window
         var scanner = plugin.Scanner;
         if (scanner.ScannedHome is null)
         {
-            ImGui.TextDisabled("Lance un scan pour obtenir des recommandations (environ une minute).");
+            ImGui.TextDisabled("Lance un scan pour obtenir des recommandations (environ 30 secondes).");
             return;
         }
 
@@ -112,6 +112,17 @@ public class MainWindow : Window
         {
             ImGui.SameLine();
             ImGui.TextDisabled($"Dernier scan : {last:HH:mm} ({(int)(DateTime.Now - last).TotalMinutes} min)");
+            if (ImGui.IsItemHovered() && scanner.LastStats is { } stats)
+                ImGui.SetTooltip(
+                    $"Durée : {scanner.LastDuration:m\\:ss}\n" +
+                    $"{stats.Checked:N0} objets vérifiés, {stats.SkippedDormant:N0} ignorés (aucune vente sur ton monde, revérifiés sous 24 h)\n" +
+                    $"{stats.Analyzed:N0} analysés en détail");
+
+            if (scanner.LastStats is { Failed: > 0 } partial)
+            {
+                ImGui.SameLine();
+                ImGui.TextColored(ImGuiColors.DalamudOrange, $"({partial.Failed:N0} objets non vérifiés, Universalis n'a pas répondu)");
+            }
         }
 
         if (scanner.Error is { } error)

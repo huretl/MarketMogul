@@ -9,13 +9,15 @@ namespace MarketMogul.Windows;
 public class ConfigWindow : Window
 {
     private readonly Configuration configuration;
+    private readonly Services.ScanService scanner;
 
     public ConfigWindow(Plugin plugin) : base("MarketMogul · Réglages###MarketMogulConfig")
     {
-        Size = new Vector2(440, 420);
+        Size = new Vector2(440, 460);
         SizeCondition = ImGuiCond.FirstUseEver;
 
         configuration = plugin.Configuration;
+        scanner = plugin.Scanner;
     }
 
     public override void Draw()
@@ -95,6 +97,14 @@ public class ConfigWindow : Window
             configuration.ShowMarketBoardAssistant = assistant;
             changed = true;
         }
+
+        ImGui.Separator();
+        ImGui.TextUnformatted($"Objets en sommeil : {scanner.DormantCount:N0}");
+        ImGui.SameLine();
+        if (ImGui.SmallButton("Tout revérifier"))
+            scanner.ResetDormantCache();
+        if (ImGui.IsItemHovered())
+            ImGui.SetTooltip("Objets sans aucune vente sur ton monde : ignorés par le scan pendant 24 h pour aller plus vite.");
 
         ImGui.Spacing();
         ImGui.TextDisabled("Les changements s'appliquent au prochain scan ou recalcul du plan.");

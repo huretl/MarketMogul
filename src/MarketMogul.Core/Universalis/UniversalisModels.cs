@@ -71,3 +71,22 @@ public sealed class Sale
     [JsonPropertyName("timestamp")]
     public long Timestamp { get; set; }
 }
+
+/// <summary>Réponse de l'endpoint d'historique (/api/v2/history) : bien plus rapide que l'historique de l'endpoint de marché.</summary>
+public sealed class HistoryResponse
+{
+    [JsonPropertyName("items")]
+    public Dictionary<string, HistoryItem> Items { get; set; } = new();
+}
+
+public sealed class HistoryItem
+{
+    [JsonPropertyName("itemID")]
+    public uint ItemId { get; set; }
+
+    [JsonPropertyName("lastUploadTime")]
+    public long LastUploadTime { get; set; }
+
+    [JsonPropertyName("entries")]
+    public List<Sale> Entries { get; set; } = new();
+}
