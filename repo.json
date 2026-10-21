@@ -3,7 +3,7 @@
     "Author": "Louis Huret",
     "Name": "MarketMogul",
     "InternalName": "MarketMogul",
-    "AssemblyVersion": "0.2.0.0",
+    "AssemblyVersion": "0.3.0.0",
     "Description": "Scanne le marketboard de ton data center via Universalis et recommande les objets à acheter sur les autres mondes pour les revendre sur ton monde d'origine, taxes, vitesse de vente et fiabilité des données comprises.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/huretl/MarketMogul",
@@ -20,11 +20,11 @@
     "LoadPriority": 0,
     "Punchline": "Achat-revente entre mondes : quoi acheter, où, et à quel prix revendre.",
     "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/huretl/MarketMogul/releases/download/v0.2.0/MarketMogul.zip",
-    "DownloadLinkTesting": "https://github.com/huretl/MarketMogul/releases/download/v0.2.0/MarketMogul.zip",
-    "DownloadLinkUpdate": "https://github.com/huretl/MarketMogul/releases/download/v0.2.0/MarketMogul.zip",
+    "DownloadLinkInstall": "https://github.com/huretl/MarketMogul/releases/download/v0.3.0/MarketMogul.zip",
+    "DownloadLinkTesting": "https://github.com/huretl/MarketMogul/releases/download/v0.3.0/MarketMogul.zip",
+    "DownloadLinkUpdate": "https://github.com/huretl/MarketMogul/releases/download/v0.3.0/MarketMogul.zip",
     "IsHide": false,
     "IsTestingExclusive": false,
-    "LastUpdate": 1792576467
+    "LastUpdate": 1792578414
   }
 ]
