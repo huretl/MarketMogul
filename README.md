@@ -54,6 +54,23 @@ Pour charger le plugin en jeu :
 
 La CI GitHub compile, lance les tests et publie le plugin en artefact à chaque push sur `main`.
 
+## Installation via Dalamud
+
+1. `/xlsettings` → **Experimental** → **Custom Plugin Repositories** : ajoute
+   `https://raw.githubusercontent.com/huretl/MarketMogul/main/repo.json`, coche **Enabled**, puis **Save and Close**.
+2. `/xlplugins` → cherche **MarketMogul** → **Install**.
+
+Les mises à jour arrivent ensuite comme pour n'importe quel plugin.
+
+## Publier une version
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+Le workflow [Release](.github/workflows/release.yml) compile avec la version du tag, lance les tests, crée la release GitHub avec `MarketMogul.zip` et met à jour `repo.json` sur `main`. Dalamud détecte une mise à jour quand la version augmente : chaque tag doit être supérieur au précédent.
+
 ## Hypothèses à vérifier en jeu
 
 - **Frais à la revente** : 5 % par défaut, hypothèse prudente. Réglable dans les réglages.

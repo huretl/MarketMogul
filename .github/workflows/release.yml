@@ -1,0 +1,71 @@
+name: Release
+
+# Pousser un tag vX.Y.Z compile le plugin, publie une release GitHub avec le zip
+# et met à jour repo.json sur main (le dépôt de plugins ajouté dans Dalamud).
+on:
+  push:
+    tags: [ 'v*.*.*' ]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    env:
+      DALAMUD_HOME: ${{ github.workspace }}/.dalamud/
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Download Dalamud
+      run: |
+        curl -sSL https://goatcorp.github.io/dalamud-distrib/latest.zip -o dalamud.zip
+        unzip -q dalamud.zip -d "$DALAMUD_HOME"
+
+    - name: Version from tag
+      run: |
+        VERSION="${GITHUB_REF_NAME#v}"
+        [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Tag invalide : $GITHUB_REF_NAME (attendu vX.Y.Z)"; exit 1; }
+        echo "VERSION=$VERSION.0" >> "$GITHUB_ENV"
+
+    - name: Build
+      run: dotnet build --configuration Release -p:Version=$VERSION
+
+    - name: Test
+      run: dotnet test --configuration Release --no-build
+
+    - name: Create GitHub release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        cp src/MarketMogul/bin/x64/Release/MarketMogul/latest.zip MarketMogul.zip
+        gh release create "$GITHUB_REF_NAME" MarketMogul.zip --title "MarketMogul $GITHUB_REF_NAME" --generate-notes
+
+    - name: Checkout main
+      uses: actions/checkout@v5
+      with:
+        ref: main
+        path: main-branch
+
+    - name: Update repo.json
+      run: |
+        URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/MarketMogul.zip"
+        jq --arg url "$URL" --arg repo "https://github.com/$GITHUB_REPOSITORY" --argjson now "$(date +%s)" \
+          '[. + {RepoUrl: $repo, DownloadLinkInstall: $url, DownloadLinkTesting: $url, DownloadLinkUpdate: $url,
+                 IsHide: false, IsTestingExclusive: false, LastUpdate: $now}]' \
+          src/MarketMogul/bin/x64/Release/MarketMogul/MarketMogul.json > main-branch/repo.json
+
+        cd main-branch
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add repo.json
+        git commit -m "Update repo.json for $GITHUB_REF_NAME"
+        git push
