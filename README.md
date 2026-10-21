@@ -16,6 +16,10 @@ Le plugin est **consultatif** : il calcule et conseille, c'est toi qui achètes 
 4. Les opportunités sont triées par **profit par jour × fiabilité**.
 5. En visite sur un autre monde, la fenêtre passe en **mode achat** et ne montre que ce qu'il y a à acheter là, avec un rappel dans le chat à l'arrivée.
 
+### Marchands PNJ
+
+Les objets vendus en gils par des marchands PNJ (lus dans les données du jeu) sont évalués comme une source d'achat supplémentaire : stock illimité, prix fixe, pas de taxe. Pour chaque objet, le scan garde la meilleure option entre le PNJ et les autres mondes. Dans le plan, ces achats apparaissent dans un groupe **Marchand PNJ**, visible depuis n'importe quel monde. L'emplacement du PNJ n'est pas encore indiqué.
+
 ### Plan d'achat
 
 L'onglet **Plan** répartit les opportunités du scan selon tes ressources réelles :
@@ -102,5 +106,6 @@ Le workflow [Release](.github/workflows/release.yml) compile avec la version du 
 - [x] Journal des achats avec profit attendu.
 - [ ] Journal P&L complet : ventes réelles des servants, capital immobilisé, objets qui ne se vendent pas.
 - [ ] Facteur de concurrence : stock déjà en vente et fréquence des sous-cotations.
-- [ ] Stratégie marchand PNJ → marketboard.
+- [x] Stratégie marchand PNJ → marketboard.
+- [ ] Indiquer le PNJ et son emplacement pour les achats chez un marchand.
 - [ ] Scan incrémental et cache local.

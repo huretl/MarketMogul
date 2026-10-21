@@ -9,7 +9,7 @@ public enum TradingStyle
     BigHits,
 }
 
-public sealed class TradingSettings
+public sealed record TradingSettings
 {
     public TradingStyle Style { get; set; } = TradingStyle.Balanced;
 

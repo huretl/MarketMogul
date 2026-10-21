@@ -2,7 +2,18 @@ namespace MarketMogul.Core.Analysis;
 
 public sealed record Purchase(uint WorldId, string WorldName, long PricePerUnit, int Quantity)
 {
+    /// <summary>Pseudo-monde des achats chez un marchand PNJ : stock illimité, prix fixe, sans taxe.</summary>
+    public const uint VendorWorldId = 0;
+    public const string VendorName = "Marchand PNJ";
+
+    public static Purchase FromVendor(long pricePerUnit, int quantity) => new(VendorWorldId, VendorName, pricePerUnit, quantity);
+
+    public bool IsVendor => WorldId == VendorWorldId;
+
     public long Subtotal => PricePerUnit * Quantity;
+
+    /// <summary>Coût réel : la taxe du marketboard ne s'applique pas chez un PNJ.</summary>
+    public double CostWithTax(double buyTaxRate) => Subtotal * (IsVendor ? 1 : 1 + buyTaxRate);
 }
 
 public sealed record Opportunity(
@@ -47,7 +58,7 @@ public sealed record Opportunity(
             Hq: hq,
             TargetSellPrice: targetSellPrice,
             Purchases: purchases,
-            TotalCost: (long)Math.Ceiling(purchases.Sum(p => p.Subtotal) * (1 + settings.BuyTaxRate)),
+            TotalCost: (long)Math.Ceiling(purchases.Sum(p => p.CostWithTax(settings.BuyTaxRate))),
             ExpectedRevenue: (long)Math.Floor(targetSellPrice * (1 - settings.SellFeeRate) * purchases.Sum(p => p.Quantity)),
             SalesPerDay: salesPerDay,
             HomeListedQuantity: homeListedQuantity,

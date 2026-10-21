@@ -27,7 +27,23 @@ public sealed class ItemCatalog
         }
 
         MarketableItemIds = ids;
+
+        // Objets vendus en gils par un marchand PNJ, à leur prix d'achat.
+        var vendorPrices = new Dictionary<uint, long>();
+        foreach (var shop in dataManager.GetSubrowExcelSheet<GilShopItem>())
+        {
+            foreach (var entry in shop)
+            {
+                var itemId = entry.Item.RowId;
+                if (items.ContainsKey(itemId) && entry.Item.Value.PriceMid > 0)
+                    vendorPrices[itemId] = entry.Item.Value.PriceMid;
+            }
+        }
+
+        VendorPrices = vendorPrices;
     }
+
+    public IReadOnlyDictionary<uint, long> VendorPrices { get; }
 
     public ItemInfo? Get(uint itemId) => items.GetValueOrDefault(itemId);
 

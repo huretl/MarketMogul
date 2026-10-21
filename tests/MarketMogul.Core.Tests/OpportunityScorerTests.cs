@@ -83,4 +83,23 @@ public class OpportunityScorerTests
 
         Assert.True(stale!.Confidence < fresh!.Confidence / 5);
     }
+
+    [Fact]
+    public void Vendor_purchase_is_untaxed_and_sized_by_demand()
+    {
+        var opportunity = OpportunityScorer.EvaluateVendor(42, vendorPrice: 5000, Data(SteadySales), Settings, Now, 60);
+
+        Assert.NotNull(opportunity);
+        var purchase = Assert.Single(opportunity.Purchases);
+        Assert.True(purchase.IsVendor);
+        Assert.Equal(5, opportunity.Units);              // 10 ventes / 14 jours × 7 jours
+        Assert.Equal(25_000, opportunity.TotalCost);     // pas de taxe chez un PNJ
+        Assert.Equal(47_500, opportunity.ExpectedRevenue);
+    }
+
+    [Fact]
+    public void Vendor_rejected_when_resale_does_not_cover_price()
+    {
+        Assert.Null(OpportunityScorer.EvaluateVendor(42, vendorPrice: 9_500, Data(SteadySales), Settings, Now, 60));
+    }
 }
