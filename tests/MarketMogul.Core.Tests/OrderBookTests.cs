@@ -29,4 +29,13 @@ public class OrderBookTests
         var purchase = Assert.Single(purchases);
         Assert.Equal(150, purchase.PricePerUnit);
     }
+
+    [Fact]
+    public void Selects_indexes_in_original_order_of_listings()
+    {
+        // Ordre d'affichage du jeu non trié : on doit retrouver les bonnes lignes.
+        var selected = OrderBook.SelectListings([(500, 1), (100, 1), (300, 1)], maxPricePerUnit: 300, maxUnits: 10);
+
+        Assert.Equal([1, 2], selected);
+    }
 }

@@ -11,7 +11,7 @@ public class ConfigWindow : Window
 
     public ConfigWindow(Plugin plugin) : base("MarketMogul – Réglages###MarketMogulConfig")
     {
-        Size = new Vector2(420, 330);
+        Size = new Vector2(420, 360);
         SizeCondition = ImGuiCond.FirstUseEver;
 
         configuration = plugin.Configuration;
@@ -65,6 +65,13 @@ public class ConfigWindow : Window
         if (ImGui.Checkbox("En visite, n'afficher que les achats du monde actuel", ref onlyHere))
         {
             configuration.OnlyCurrentWorldWhenVisiting = onlyHere;
+            changed = true;
+        }
+
+        var assistant = configuration.ShowMarketBoardAssistant;
+        if (ImGui.Checkbox("Conseil d'achat à côté du marketboard", ref assistant))
+        {
+            configuration.ShowMarketBoardAssistant = assistant;
             changed = true;
         }
 

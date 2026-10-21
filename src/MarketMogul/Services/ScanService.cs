@@ -11,7 +11,6 @@ namespace MarketMogul.Services;
 /// <summary>Lance les scans Universalis en arrière-plan et expose le dernier résultat à l'interface.</summary>
 public sealed class ScanService : IDisposable
 {
-    private readonly UniversalisClient client;
     private readonly ArbitrageScanner scanner;
     private readonly ItemCatalog catalog;
     private readonly IPluginLog log;
@@ -24,11 +23,10 @@ public sealed class ScanService : IDisposable
     public WorldInfo? ScannedHome { get; private set; }
     public IReadOnlyList<Opportunity> Opportunities { get; private set; } = [];
 
-    public ScanService(ItemCatalog catalog, IPluginLog log, string userAgent)
+    public ScanService(UniversalisClient client, ItemCatalog catalog, IPluginLog log)
     {
         this.catalog = catalog;
         this.log = log;
-        client = new UniversalisClient(userAgent);
         scanner = new ArbitrageScanner(client);
     }
 
@@ -75,6 +73,5 @@ public sealed class ScanService : IDisposable
     {
         cts?.Cancel();
         cts?.Dispose();
-        client.Dispose();
     }
 }

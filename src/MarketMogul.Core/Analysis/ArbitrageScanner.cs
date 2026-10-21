@@ -4,8 +4,8 @@ namespace MarketMogul.Core.Analysis;
 
 public sealed class ArbitrageScanner(UniversalisClient client)
 {
-    private const int HomeListings = 20;
-    private const int HomeHistoryEntries = 60;
+    public const int HomeListings = 20;
+    public const int HomeHistoryEntries = 60;
     private const int DataCenterListings = 50;
 
     /// <summary>

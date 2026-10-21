@@ -16,6 +16,16 @@ Le plugin est **consultatif** : il calcule et conseille, c'est toi qui achètes 
 4. Les opportunités sont triées par **profit par jour × fiabilité**.
 5. En visite sur un autre monde, la fenêtre passe en **mode achat** et ne montre que ce qu'il y a à acheter là, avec un rappel dans le chat à l'arrivée.
 
+### Conseil d'achat au marketboard
+
+Quand tu ouvres un objet au marketboard, un panneau s'accroche à droite de la liste des annonces. Il utilise les annonces **reçues en direct par le jeu**, plus fraîches que n'importe quel scan, et les prix de revente de ton monde d'origine, récupérés à la demande (cache de 10 minutes), même sans scan préalable. Pour chaque qualité (NQ/HQ) :
+
+- prix de revente attendu, vitesse de vente, **prix maximum d'achat** et quantité maximale ;
+- chaque annonce avec son servant, son profit par unité et un conseil : **ACHETER**, *Hors quota* (rentable mais au-delà de ce que ton monde absorbe) ou *Trop cher* ;
+- le total à acheter : unités, coût, profit attendu.
+
+Le nom du servant permet de retrouver chaque annonce dans la liste du jeu, quel que soit le tri choisi.
+
 Commande : `/mogul`.
 
 ## Structure
@@ -51,7 +61,9 @@ La CI GitHub compile, lance les tests et publie le plugin en artefact à chaque 
 
 ## Feuille de route
 
-- [ ] Surligner les annonces rentables directement dans la fenêtre du marketboard.
+- [x] Conseil d'achat à côté du marketboard, à partir des annonces en direct.
+- [ ] Colorer directement les lignes rentables dans la liste du jeu (à valider en jeu).
+- [ ] Cocher les achats faits (événement d'achat du marketboard) et mettre à jour le plan.
 - [ ] Optimiseur de portefeuille : répartir ton budget (gils lus en jeu) et tes emplacements de vente.
 - [ ] Prix conseillé et alertes de sous-cotation chez les servants.
 - [ ] Journal P&L : achats et ventes réels, capital immobilisé, objets qui ne se vendent pas.

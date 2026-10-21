@@ -19,15 +19,11 @@ public static class OpportunityScorer
         int historyEntriesRequested)
     {
         var stats = HomeMarketStats.From(home, hq, now, settings.SalesWindowDays, historyEntriesRequested);
-        if (stats.TargetSellPrice is not { } sellPrice || stats.SalesPerDay < settings.MinSalesPerDay)
+        if (BuyAdvisor.Limits(stats, settings) is not { } limits)
             return null;
 
-        var netSellPrice = sellPrice * (1 - settings.SellFeeRate);
-        var maxBuyPrice = (long)Math.Floor((netSellPrice - settings.MinProfitPerUnit) / (1 + settings.BuyTaxRate));
-        var maxUnits = Math.Max(1, (int)Math.Floor(stats.SalesPerDay * settings.HorizonDays));
-
         var candidates = dataCenter.Listings.Where(l => l.Hq == hq && l.WorldId != homeWorldId);
-        var purchases = OrderBook.PlanPurchases(candidates, maxBuyPrice, maxUnits);
+        var purchases = OrderBook.PlanPurchases(candidates, limits.MaxPricePerUnit, limits.MaxUnits);
         if (purchases.Count == 0)
             return null;
 
@@ -35,10 +31,10 @@ public static class OpportunityScorer
         var opportunity = new Opportunity(
             ItemId: itemId,
             Hq: hq,
-            TargetSellPrice: sellPrice,
+            TargetSellPrice: limits.TargetSellPrice,
             Purchases: purchases,
             TotalCost: (long)Math.Ceiling(purchases.Sum(p => p.Subtotal) * (1 + settings.BuyTaxRate)),
-            ExpectedRevenue: (long)Math.Floor(netSellPrice * units),
+            ExpectedRevenue: (long)Math.Floor(limits.TargetSellPrice * (1 - settings.SellFeeRate) * units),
             SalesPerDay: stats.SalesPerDay,
             HomeListedQuantity: stats.ListedQuantity,
             Confidence: Confidence(stats, home, dataCenter, purchases, now));

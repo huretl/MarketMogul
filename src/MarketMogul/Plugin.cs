@@ -1,4 +1,5 @@
 using System.Linq;
+using MarketMogul.Core.Universalis;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
@@ -18,6 +19,8 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IFramework Framework { get; private set; } = null!;
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     [PluginService] internal static IChatGui ChatGui { get; private set; } = null!;
+    [PluginService] internal static IGameGui GameGui { get; private set; } = null!;
+    [PluginService] internal static IMarketBoard MarketBoardService { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
 
     private const string CommandName = "/mogul";
@@ -26,10 +29,15 @@ public sealed class Plugin : IDalamudPlugin
     public ItemCatalog Catalog { get; }
     public WorldTracker Worlds { get; }
     public ScanService Scanner { get; }
+    public HomePriceService HomePrices { get; }
+    public MarketBoardWatcher MarketBoard { get; }
+
+    private readonly UniversalisClient universalis;
 
     public readonly WindowSystem WindowSystem = new("MarketMogul");
     private ConfigWindow ConfigWindow { get; init; }
     private MainWindow MainWindow { get; init; }
+    private MarketBoardWindow MarketBoardWindow { get; init; }
 
     public Plugin()
     {
@@ -37,14 +45,19 @@ public sealed class Plugin : IDalamudPlugin
 
         Catalog = new ItemCatalog(DataManager);
         Worlds = new WorldTracker(PlayerState, Framework);
-        Scanner = new ScanService(Catalog, Log, $"MarketMogul/{PluginInterface.Manifest.AssemblyVersion} (Dalamud plugin)");
+        universalis = new UniversalisClient($"MarketMogul/{PluginInterface.Manifest.AssemblyVersion} (Dalamud plugin)");
+        Scanner = new ScanService(universalis, Catalog, Log);
+        HomePrices = new HomePriceService(universalis, Log);
+        MarketBoard = new MarketBoardWatcher(MarketBoardService);
         Worlds.WorldChanged += OnWorldChanged;
 
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this);
+        MarketBoardWindow = new MarketBoardWindow(this);
 
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
+        WindowSystem.AddWindow(MarketBoardWindow);
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
@@ -67,6 +80,8 @@ public sealed class Plugin : IDalamudPlugin
         Worlds.WorldChanged -= OnWorldChanged;
         Worlds.Dispose();
         Scanner.Dispose();
+        MarketBoard.Dispose();
+        universalis.Dispose();
 
         CommandManager.RemoveHandler(CommandName);
     }

@@ -8,22 +8,33 @@ public static class OrderBook
     /// Parcourt les annonces de la moins chère à la plus chère et garde celles qui restent rentables.
     /// Une annonce s'achète en entier : on saute celles qui dépasseraient la quantité voulue.
     /// </summary>
-    public static List<Purchase> PlanPurchases(IEnumerable<Listing> listings, long maxPricePerUnit, int maxUnits)
+    /// <returns>Les indices des annonces à acheter dans <paramref name="listings"/>.</returns>
+    public static List<int> SelectListings(IReadOnlyList<(long PricePerUnit, int Quantity)> listings, long maxPricePerUnit, int maxUnits)
     {
-        var purchases = new List<Purchase>();
+        var selected = new List<int>();
         var remaining = maxUnits;
 
-        foreach (var listing in listings.OrderBy(l => l.PricePerUnit))
+        foreach (var i in Enumerable.Range(0, listings.Count).OrderBy(i => listings[i].PricePerUnit))
         {
-            if (remaining <= 0 || listing.PricePerUnit > maxPricePerUnit)
+            var (price, quantity) = listings[i];
+            if (remaining <= 0 || price > maxPricePerUnit)
                 break;
-            if (listing.Quantity > remaining)
+            if (quantity > remaining)
                 continue;
 
-            purchases.Add(new Purchase(listing.WorldId ?? 0, listing.WorldName ?? "?", listing.PricePerUnit, listing.Quantity));
-            remaining -= listing.Quantity;
+            selected.Add(i);
+            remaining -= quantity;
         }
 
-        return purchases;
+        return selected;
+    }
+
+    public static List<Purchase> PlanPurchases(IEnumerable<Listing> listings, long maxPricePerUnit, int maxUnits)
+    {
+        var all = listings.ToList();
+        return SelectListings(all.Select(l => (l.PricePerUnit, l.Quantity)).ToList(), maxPricePerUnit, maxUnits)
+            .Select(i => all[i])
+            .Select(l => new Purchase(l.WorldId ?? 0, l.WorldName ?? "?", l.PricePerUnit, l.Quantity))
+            .ToList();
     }
 }
