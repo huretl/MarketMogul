@@ -51,7 +51,7 @@ public sealed class Plugin : IDalamudPlugin
         Catalog = new ItemCatalog(DataManager);
         Worlds = new WorldTracker(PlayerState, Framework);
         universalis = new UniversalisClient($"MarketMogul/{PluginInterface.Manifest.AssemblyVersion} (Dalamud plugin)");
-        Scanner = new ScanService(universalis, Catalog, Log);
+        Scanner = new ScanService(universalis, Catalog, Log, PluginInterface.GetPluginConfigDirectory());
         HomePrices = new HomePriceService(universalis, Log);
         MarketBoard = new MarketBoardWatcher(MarketBoardService);
         Plan = new PlanService(Scanner, Configuration, Catalog);
