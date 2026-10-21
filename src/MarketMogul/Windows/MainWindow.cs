@@ -169,7 +169,8 @@ public class MainWindow : Window
         using var child = ImRaii.Child("plan", Vector2.Zero);
         foreach (var group in byWorld)
         {
-            if (onlyWorld is { } id && group.Key.WorldId != id)
+            // Un marchand PNJ est accessible depuis n'importe quel monde.
+            if (onlyWorld is { } id && group.Key.WorldId != id && group.Key.WorldId != Purchase.VendorWorldId)
                 continue;
 
             var here = group.Key.WorldId == worlds.Current!.Id;
@@ -179,7 +180,10 @@ public class MainWindow : Window
                 : $"{group.Key.WorldName} · {remaining.Sum(x => x.Purchase.Quantity)} unités · {remaining.Sum(x => x.Purchase.Subtotal):N0} gils";
             using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen, here))
             {
-                if (!ImGui.CollapsingHeader($"{title}{(here ? "  (tu es ici)" : "")}###{group.Key.WorldId}", ImGuiTreeNodeFlags.DefaultOpen))
+                var open = ImGui.CollapsingHeader($"{title}{(here ? "  (tu es ici)" : "")}###{group.Key.WorldId}", ImGuiTreeNodeFlags.DefaultOpen);
+                if (group.Key.WorldId == Purchase.VendorWorldId && ImGui.IsItemHovered())
+                    ImGui.SetTooltip("Objets vendus en gils par des marchands PNJ : stock illimité, prix fixe, sans taxe.\nCes achats ne sont pas cochés automatiquement.");
+                if (!open)
                     continue;
             }
 
@@ -297,7 +301,7 @@ public class MainWindow : Window
 
         uint? onlyWorld = worlds.IsVisiting && plugin.Configuration.OnlyCurrentWorldWhenVisiting ? worlds.Current!.Id : null;
         var rows = scanner.Opportunities
-            .Where(o => onlyWorld is null || o.Purchases.Any(p => p.WorldId == onlyWorld))
+            .Where(o => onlyWorld is null || o.Purchases.Any(p => p.WorldId == onlyWorld || p.IsVendor))
             .ToList();
 
         if (rows.Count == 0)

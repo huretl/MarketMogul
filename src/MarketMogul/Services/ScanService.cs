@@ -46,7 +46,7 @@ public sealed class ScanService : IDisposable
             try
             {
                 var progress = new Progress<double>(p => Progress = p);
-                var result = await scanner.ScanAsync(home.Id, home.DataCenter, catalog.MarketableItemIds, settings, progress, ct);
+                var result = await scanner.ScanAsync(home.Id, home.DataCenter, catalog.MarketableItemIds, settings, catalog.VendorPrices, progress, ct);
                 Opportunities = result;
                 ScannedHome = home;
                 LastScan = DateTime.Now;
